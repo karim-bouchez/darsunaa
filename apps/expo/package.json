@@ -1,5 +1,5 @@
 {
-  "name": "@darsunaa/expo",
+  "name": "@acme/expo",
   "private": true,
   "main": "index.ts",
   "scripts": {
@@ -43,11 +43,11 @@
     "superjson": "2.2.2"
   },
   "devDependencies": {
-    "@darsunaa/api": "workspace:*",
-    "@darsunaa/eslint-config": "workspace:*",
-    "@darsunaa/prettier-config": "workspace:*",
-    "@darsunaa/tailwind-config": "workspace:*",
-    "@darsunaa/tsconfig": "workspace:*",
+    "@acme/api": "workspace:*",
+    "@acme/eslint-config": "workspace:*",
+    "@acme/prettier-config": "workspace:*",
+    "@acme/tailwind-config": "workspace:*",
+    "@acme/tsconfig": "workspace:*",
     "@babel/core": "^7.28.4",
     "@babel/preset-env": "^7.28.3",
     "@babel/runtime": "^7.28.4",
@@ -58,5 +58,5 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@darsunaa/prettier-config"
+  "prettier": "@acme/prettier-config"
 }
