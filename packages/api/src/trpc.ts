@@ -7,10 +7,11 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 import { initTRPC, TRPCError } from "@trpc/server";
+import { createAuthClient } from "better-auth/client";
 import superjson from "superjson";
 import { z, ZodError } from "zod/v4";
 
-import type { Auth } from "@darsunaa/auth";
+import { env } from "@darsunaa/auth/env";
 import { db } from "@darsunaa/db/client";
 
 /**
@@ -26,16 +27,27 @@ import { db } from "@darsunaa/db/client";
  * @see https://trpc.io/docs/server/context
  */
 
+const AUTH_SERVICE_URL = env.NEXT_PUBLIC_AUTH_SERVICE_URL;
+
+/**
+ * Better-Auth client for server-side session retrieval
+ * This provides E2E type-safety with the auth-service
+ */
+const authClient = createAuthClient({
+  baseURL: AUTH_SERVICE_URL,
+});
+
 export const createTRPCContext = async (opts: {
   headers: Headers;
-  auth: Auth;
 }) => {
-  const authApi = opts.auth.api;
-  const session = await authApi.getSession({
-    headers: opts.headers,
+  // Get session from auth-service using Better-Auth client (E2E type-safe!)
+  const { data: session } = await authClient.getSession({
+    fetchOptions: {
+      headers: opts.headers,
+    },
   });
+
   return {
-    authApi,
     session,
     db,
   };

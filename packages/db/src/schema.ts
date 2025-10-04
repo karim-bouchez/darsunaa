@@ -3,6 +3,10 @@ import { pgTable } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
+/**
+ * Database schema for darsunaa application
+ */
+
 export const Post = pgTable("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.varchar({ length: 256 }).notNull(),
@@ -21,5 +25,3 @@ export const CreatePostSchema = createInsertSchema(Post, {
   createdAt: true,
   updatedAt: true,
 });
-
-export * from "./auth-schema";

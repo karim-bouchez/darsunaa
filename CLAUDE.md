@@ -4,7 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-This is a **T3-Turbo monorepo** using Turborepo and pnpm workspaces. It contains:
+This is a **T3-Turbo monorepo** using Turborepo and pnpm workspaces.
+
+### Authentication Architecture
+
+**IMPORTANT**: This project uses an **external auth-service microservice** for authentication.
+
+- **Location**: `/Users/karim/perso/projects/devndin/auth-service`
+- **Port**: 3001 (must be started BEFORE running this application)
+- **Responsibility**: All authentication operations (sign-in, sign-up, sessions, OAuth)
+- **Database**: User/session tables are in the auth-service database (separate from this app's database)
+- **Integration**: This application only contains Better-Auth **clients** (not the server)
+
+### Monorepo Structure
+
+It contains:
 
 ```
 .github
@@ -28,9 +42,9 @@ packages
   ├─ api
   │   └─ tRPC v11 router definition
   ├─ auth
-  │   └─ Authentication using better-auth.
+  │   └─ Better-Auth clients (connects to external auth-service)
   ├─ db
-  │   └─ Typesafe db calls using Drizzle & PostgreSQL
+  │   └─ Typesafe db calls using Drizzle & PostgreSQL (app data only)
   └─ ui
       └─ Start of a UI package for the webapp using shadcn-ui
 tooling
@@ -48,20 +62,22 @@ tooling
 - The `@darsunaa/api` package is a **production dependency** in Next.js only (the tRPC server runs there)
 - Other apps (Expo) include `@darsunaa/api` as a **dev dependency** for type-safety only
 - The database uses **PostgreSQL** with the `postgres` driver (postgres.js) - standard Node.js runtime (not edge)
-- Authentication is handled by Better-Auth with a shared config in `@darsunaa/auth`
-
-## System Requirements
-
-- **Node.js**: >= 22.19.0
-- **pnpm**: >= 10.15.1 (package manager - do NOT use npm or yarn)
+- **Authentication is handled by an external auth-service microservice** - this repo only contains Better-Auth clients
+- Application database contains ONLY business data (posts, etc.) - user/session tables are in auth-service
 
 ## Common Commands
 
 ### Development
 
+**IMPORTANT**: Always start the auth-service FIRST before running any darsunaa apps!
+
 ```bash
-# Install dependencies (run from root)
-pnpm install
+# 1. Start auth-service (in a separate terminal)
+cd /Users/karim/perso/projects/devndin/auth-service
+pnpm dev  # Runs on port 3001
+
+# 2. Then start darsunaa apps (run from darsunaa root)
+pnpm install  # Install dependencies (first time only)
 
 # Start all apps in watch mode (Next.js + Expo)
 pnpm dev
@@ -87,25 +103,27 @@ pnpm db:push
 pnpm db:studio
 ```
 
-### Better-Auth Setup
+### Authentication Service
 
-**CRITICAL:** Before first run, you must generate the Better-Auth schema:
+**CRITICAL:** The auth-service must be running before starting darsunaa apps!
 
 ```bash
-# Generate auth tables schema (writes to packages/db/src/auth-schema.ts)
-pnpm auth:generate
-# Equivalent to: pnpm --filter @darsunaa/auth generate
-
-# Then push to database
-pnpm db:push
+# Start auth-service (in separate terminal)
+cd /Users/karim/perso/projects/devndin/auth-service
+pnpm dev  # Port 3001
 ```
 
-**How it works:**
-- Config file: `packages/auth/script/auth-cli.ts` (CLI-only config, NOT imported in app code)
-- Output: `packages/db/src/auth-schema.ts` (generated Drizzle schema)
-- Runtime config: `packages/auth/src/index.ts` (actual auth implementation)
+**Environment variables required:**
+- `NEXT_PUBLIC_AUTH_SERVICE_URL`: http://localhost:3001 (Next.js uses localhost)
+- `EXPO_PUBLIC_AUTH_SERVICE_URL`: http://YOUR_LOCAL_IP:3001 (Expo needs your IP address)
+- `EXPO_PUBLIC_API_URL`: http://YOUR_LOCAL_IP:3000 (for tRPC API from Expo)
 
-The `script/auth-cli.ts` file is isolated in a separate directory to prevent accidental imports in source code.
+**How it works:**
+- Auth-service runs as a separate microservice on port 3001
+- All authentication operations are handled by auth-service
+- This app only contains Better-Auth **clients** that connect to auth-service
+- User/session tables are in auth-service database (separate from app database)
+- **Expo apps require your local IP address** instead of `localhost` to access services on your dev machine
 
 ### Code Quality
 
@@ -149,39 +167,38 @@ pnpm turbo gen init
 Create a `.env` file at the **root** of the monorepo (use `.env.example` as template):
 
 ```bash
-# PostgreSQL connection (local or remote)
-# Format: postgres://[USERNAME]:[PASSWORD]@[HOST]:[PORT]/[DATABASE]
-# Local example: postgres://karim:password@localhost:5432/darsunaa
+# Application database (business data only - NOT auth tables)
 POSTGRES_URL="postgres://username:password@localhost:5432/database_name"
 
-# Better-Auth secret (generate with: openssl rand -base64 32)
-AUTH_SECRET="your-secret-here"
+# Auth service URL - Next.js uses localhost
+NEXT_PUBLIC_AUTH_SERVICE_URL="http://localhost:3001"
 
-# Discord OAuth (optional)
-AUTH_DISCORD_ID=""
-AUTH_DISCORD_SECRET=""
+# Auth service URL - Expo uses your local IP (find with ifconfig/ipconfig)
+EXPO_PUBLIC_AUTH_SERVICE_URL="http://192.168.1.10:3001"
 
-# Auth proxy URL (for Expo OAuth - see below)
-AUTH_REDIRECT_PROXY_URL=""
+# Next.js API URL - Expo only (replace with your local IP)
+EXPO_PUBLIC_API_URL="http://192.168.1.10:3000"
 ```
 
-## Better-Auth with Expo (OAuth)
+**Important notes:**
+- **Expo requires your local IP address** (not `localhost`) to access services on your dev machine
+- Find your IP: `ifconfig | grep "inet " | grep -v 127.0.0.1` (Mac/Linux) or `ipconfig` (Windows)
+- Auth-service has its own database and environment variables (see auth-service documentation)
+- OAuth providers (Discord, Google, etc.) are configured in auth-service, not here
 
-To get OAuth working with the Expo app, you have **two options**:
+## OAuth with Expo
 
-### Option 1: Deploy Auth Proxy (Recommended)
+OAuth configuration is handled entirely by the **auth-service microservice**.
 
-Better-Auth includes an [OAuth proxy plugin](https://www.better-auth.com/docs/plugins/oauth-proxy):
-- Deploy the Next.js app to get a stable public URL
-- The proxy forwards OAuth requests, handling redirects back to the app
-- Works in preview deployments and development
-- Solves the issue of changing ports/IPs
+### Development
+- Expo app connects to auth-service on your local network (port 3001)
+- OAuth providers must be configured in auth-service (see auth-service docs)
+- Make sure auth-service is running and accessible
 
-### Option 2: Add Local IP to OAuth Provider
-
-Add your local IP (e.g., `http://192.168.x.y:3000`) to your OAuth provider's callback URLs:
-- Less reliable (IP changes when switching networks)
-- Some providers (e.g., GitHub) only allow one callback URL per app
+### Production
+- Deploy auth-service with OAuth configured
+- Update `NEXT_PUBLIC_AUTH_SERVICE_URL` and `EXPO_PUBLIC_AUTH_SERVICE_URL` to point to production auth-service
+- Auth-service supports OAuth proxy for mobile - see auth-service documentation
 
 ## Workspace Package Naming
 
@@ -213,20 +230,20 @@ Key Turbo tasks (see `turbo.json`):
 2. **Configure environment:**
    ```bash
    cp .env.example .env
-   # Edit .env with your database URL and secrets
    ```
 
-3. **Generate Better-Auth schema:**
-   ```bash
-   pnpm auth:generate
-   ```
-
-4. **Push database schema:**
+3. **Push database schema (application tables only):**
    ```bash
    pnpm db:push
    ```
 
-5. **Start development:**
+4. **Start auth-service (in separate terminal):**
+   ```bash
+   cd /Users/karim/perso/projects/devndin/auth-service
+   pnpm dev  # Port 3001
+   ```
+
+5. **Start development (from darsunaa root):**
    ```bash
    pnpm dev
    ```
@@ -244,14 +261,31 @@ Key Turbo tasks (see `turbo.json`):
 
 ## Deployment
 
+### Prerequisites
+**Deploy auth-service FIRST** before deploying darsunaa apps!
+
+### Auth-Service Deployment
+1. Deploy auth-service to your hosting provider (Vercel, Railway, etc.)
+2. Note the production URL (e.g., https://auth.yourdomain.com)
+3. Configure OAuth providers in auth-service
+
 ### Next.js (Vercel)
 1. Deploy from `apps/nextjs` directory
-2. Set `POSTGRES_URL` and `AUTH_SECRET` environment variables
+2. Set environment variables:
+   - `POSTGRES_URL`: Application database URL
+   - `NEXT_PUBLIC_AUTH_SERVICE_URL`: Production auth-service URL
 3. Vercel's zero-config should handle the rest
 
 ### Expo (App Stores)
-1. Update `getBaseUrl()` in `apps/expo/src/utils/api.tsx` to point to production Next.js URL
-2. Use EAS Build: `eas build --platform ios --profile production`
-3. Submit to stores: `eas submit --platform ios --latest`
+1. Update environment variables for production:
+   - `EXPO_PUBLIC_AUTH_SERVICE_URL`: Production auth-service URL
+2. Update `getBaseUrl()` in `apps/expo/src/utils/base-url.ts` for tRPC API (Next.js URL)
+3. Use EAS Build: `eas build --platform ios --profile production`
+4. Submit to stores: `eas submit --platform ios --latest`
 
 See full deployment guide in README.md.
+
+
+---
+
+- remove all dead code

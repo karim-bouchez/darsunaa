@@ -1,35 +1,57 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useRouter } from "next/navigation";
 
 import { Button } from "@darsunaa/ui/button";
+import { authClient } from "@darsunaa/auth/client";
 
-import { auth, getSession } from "~/auth/server";
+/**
+ * Auth showcase component
+ *
+ * This component demonstrates authentication using the external auth-service microservice.
+ * All authentication operations are handled client-side via the authClient.
+ */
+export function AuthShowcase() {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
 
-export async function AuthShowcase() {
-  const session = await getSession();
+  const handleSignIn = async () => {
+    try {
+      const res = await authClient.signIn.social({
+        provider: "discord",
+        callbackURL: "/",
+      });
+
+      // Better-Auth returns { data, error }
+      if (res.error) {
+        console.error("Sign in failed:", res.error);
+        return;
+      }
+
+      // Redirect to OAuth provider URL
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (error) {
+      console.error("Sign in failed:", error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await authClient.signOut();
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  };
 
   if (!session) {
     return (
-      <form>
-        <Button
-          size="lg"
-          formAction={async () => {
-            "use server";
-            const res = await auth.api.signInSocial({
-              body: {
-                provider: "discord",
-                callbackURL: "/",
-              },
-            });
-            if (!res.url) {
-              throw new Error("No URL returned from signInSocial");
-            }
-            redirect(res.url);
-          }}
-        >
-          Sign in with Discord
-        </Button>
-      </form>
+      <Button size="lg" onClick={handleSignIn}>
+        Sign in with Discord
+      </Button>
     );
   }
 
@@ -39,20 +61,9 @@ export async function AuthShowcase() {
         <span>Logged in as {session.user.name}</span>
       </p>
 
-      <form>
-        <Button
-          size="lg"
-          formAction={async () => {
-            "use server";
-            await auth.api.signOut({
-              headers: await headers(),
-            });
-            redirect("/");
-          }}
-        >
-          Sign out
-        </Button>
-      </form>
+      <Button size="lg" onClick={handleSignOut}>
+        Sign out
+      </Button>
     </div>
   );
 }

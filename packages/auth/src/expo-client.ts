@@ -2,16 +2,18 @@ import * as SecureStore from "expo-secure-store";
 import { expoClient } from "@better-auth/expo/client";
 import { createAuthClient } from "better-auth/react";
 
-import { getAuthServiceUrl } from "./base-url";
+import { env } from "../env-expo";
 
 /**
- * Better-Auth client for Expo
+ * Better-Auth client for Expo/React Native configured to use the external auth-service microservice.
  *
- * This client connects to the external auth-service microservice.
+ * By default, points to http://localhost:3001 in development.
+ * In production, configure AUTH_SERVICE_URL environment variable.
+ *
  * Uses Expo SecureStore for secure token storage.
  */
 export const authClient = createAuthClient({
-  baseURL: getAuthServiceUrl(),
+  baseURL: env.EXPO_PUBLIC_AUTH_SERVICE_URL,
   plugins: [
     expoClient({
       scheme: "expo",
@@ -20,3 +22,5 @@ export const authClient = createAuthClient({
     }),
   ],
 });
+
+export type Session = typeof authClient.$Infer.Session;

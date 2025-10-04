@@ -1,26 +1,45 @@
-import Constants from "expo-constants";
+import { env } from "~/env";
 
 /**
- * Extend this function when going to production by
- * setting the baseUrl to your production API URL.
+ * Get base URL for tRPC API (Next.js backend)
+ *
+ * In development: http://YOUR_LOCAL_IP:3000 (e.g., http://192.168.1.10:3000)
+ * In production: Your deployed Next.js URL (e.g., https://api.yourdomain.com)
+ *
+ * Set via EXPO_PUBLIC_API_URL environment variable
  */
 export const getBaseUrl = () => {
-  /**
-   * Gets the IP address of your host-machine. If it cannot automatically find it,
-   * you'll have to manually set it. NOTE: Port 3000 should work for most but confirm
-   * you don't have anything else running on it, or you'd have to change it.
-   *
-   * **NOTE**: This is only for development. In production, you'll want to set the
-   * baseUrl to your production API URL.
-   */
-  const debuggerHost = Constants.expoConfig?.hostUri;
-  const localhost = debuggerHost?.split(":")[0];
+  const url = env.EXPO_PUBLIC_API_URL;
 
-  if (!localhost) {
-    // return "https://turbo.t3.gg";
+  if (!url) {
     throw new Error(
-      "Failed to get localhost. Please point to your production server.",
+      "EXPO_PUBLIC_API_URL is not set. Please configure it in your .env file.\n" +
+      "Development example: EXPO_PUBLIC_API_URL=http://192.168.1.10:3000\n" +
+      "Production example: EXPO_PUBLIC_API_URL=https://api.yourdomain.com"
     );
   }
-  return `http://${localhost}:3000`;
+
+  return url;
+};
+
+/**
+ * Get auth service URL
+ *
+ * In development: http://YOUR_LOCAL_IP:3001 (e.g., http://192.168.1.10:3001)
+ * In production: Your deployed auth-service URL (e.g., https://auth.yourdomain.com)
+ *
+ * Set via EXPO_PUBLIC_AUTH_SERVICE_URL environment variable
+ */
+export const getAuthServiceUrl = () => {
+  const url = env.EXPO_PUBLIC_AUTH_SERVICE_URL;
+
+  if (!url) {
+    throw new Error(
+      "EXPO_PUBLIC_AUTH_SERVICE_URL is not set. Please configure it in your .env file.\n" +
+      "Development example: EXPO_PUBLIC_AUTH_SERVICE_URL=http://192.168.1.10:3001\n" +
+      "Production example: EXPO_PUBLIC_AUTH_SERVICE_URL=https://auth.yourdomain.com"
+    );
+  }
+
+  return url;
 };

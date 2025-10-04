@@ -1,11 +1,10 @@
-# create-t3-turbo
+# darsunaa
 
-> [!NOTE]
+> [!IMPORTANT]
 >
-> create-t3-turbo now uses better-auth for authentication!
-> Look out for bugs as we're working through the last issues,
-> especially, the oauth proxy might not play very nice with Expo
-> so you might need to disable that in [`@darsunaa/auth`](./packages/auth/src/index.ts)
+> This project uses an **external auth-service microservice** for authentication!
+> You must start the auth-service (on port 3001) before running this application.
+> See [Authentication Setup](#authentication-setup) for details.
 
 ## Installation
 
@@ -72,7 +71,11 @@ tooling
 ## Quick Start
 
 > **Note**
-> The [db](./packages/db) package is configured to use **PostgreSQL** with the [postgres](https://github.com/porsager/postgres) driver (postgres.js). The database connection runs in standard Node.js runtime (not edge). If you need to use a different database or driver, make the necessary modifications to the [schema](./packages/db/src/schema.ts), the [client](./packages/db/src/client.ts), and the [drizzle config](./packages/db/drizzle.config.ts).
+> The [db](./packages/db) package is configured to use **PostgreSQL** with the [postgres](https://github.com/porsager/postgres) driver (postgres.js). The database connection runs in standard Node.js runtime (not edge).
+>
+> **Important**: This database contains ONLY application data (e.g., posts, user-generated content). Authentication tables (users, sessions, etc.) are managed by the external auth-service microservice and are stored in a separate database.
+>
+> If you need to use a different database or driver, make the necessary modifications to the [schema](./packages/db/src/schema.ts), the [client](./packages/db/src/client.ts), and the [drizzle config](./packages/db/drizzle.config.ts).
 
 To get it running, follow the steps below:
 
@@ -90,29 +93,55 @@ cp .env.example .env
 pnpm db:push
 ```
 
-### 2. Generate Better Auth Schema
+### 2. Authentication Setup
 
-This project uses [Better Auth](https://www.better-auth.com) for authentication. The auth schema needs to be generated using the Better Auth CLI before you can use the authentication features.
+This project uses an **external auth-service microservice** for authentication instead of embedded Better Auth.
+
+#### Prerequisites
+
+1. The auth-service must be running on port 3001 (default)
+2. Location: `/Users/karim/perso/projects/devndin/auth-service`
+
+#### Start the auth-service
+
+**IMPORTANT: You must start auth-service BEFORE starting darsunaa apps**
 
 ```bash
-# Generate the Better Auth schema
-pnpm --filter @darsunaa/auth generate
+# In a separate terminal, navigate to auth-service
+cd /Users/karim/perso/projects/devndin/auth-service
+
+# Install dependencies (first time only)
+pnpm install
+
+# Start the auth service (runs on port 3001)
+pnpm dev
 ```
 
-This command runs the Better Auth CLI with the following configuration:
+The auth-service provides:
+- User authentication (email/password, OAuth)
+- Session management
+- User database (separate from application database)
 
-- **Config file**: `packages/auth/script/auth-cli.ts` - A CLI-only configuration file (isolated from src to prevent imports)
-- **Output**: `packages/db/src/auth-schema.ts` - Generated Drizzle schema for authentication tables
+#### Configure Environment Variables
 
-The generation process:
+In your `.env` file, configure the service URLs:
 
-1. Reads the Better Auth configuration from `packages/auth/script/auth-cli.ts`
-2. Generates the appropriate database schema based on your auth setup
-3. Outputs a Drizzle-compatible schema file to the `@darsunaa/db` package
+**For Next.js** (uses localhost):
+```bash
+NEXT_PUBLIC_AUTH_SERVICE_URL="http://localhost:3001"
+```
 
-> **Note**: The `auth-cli.ts` file is placed in the `script/` directory (instead of `src/`) to prevent accidental imports from other parts of the codebase. This file is exclusively for CLI schema generation and should **not** be used directly in your application. For runtime authentication, use the configuration from `packages/auth/src/index.ts`.
+**For Expo** (uses your local IP address):
+```bash
+# Find your local IP:
+# - Mac/Linux: ifconfig | grep "inet " | grep -v 127.0.0.1
+# - Windows: ipconfig
+# Replace 192.168.1.10 with YOUR local IP address
+EXPO_PUBLIC_AUTH_SERVICE_URL="http://192.168.1.10:3001"
+EXPO_PUBLIC_API_URL="http://192.168.1.10:3000"
+```
 
-For more information about the Better Auth CLI, see the [official documentation](https://www.better-auth.com/docs/concepts/cli#generate).
+> **Note**: Expo mobile apps need your machine's IP address (not `localhost`) to access services running on your development machine.
 
 ### 3. Configure Expo `dev`-script
 
@@ -140,19 +169,22 @@ For more information about the Better Auth CLI, see the [official documentation]
 
 3. Run `pnpm dev` at the project root folder.
 
-### 4. Configuring Better-Auth to work with Expo
+### 4. OAuth Configuration for Expo
 
-In order to get Better-Auth to work with Expo, you must either:
+Since authentication is handled by the external auth-service microservice, OAuth configuration is managed there.
 
-#### Deploy the Auth Proxy (RECOMMENDED)
+#### For Development
 
-Better-auth comes with an [auth proxy plugin](https://www.better-auth.com/docs/plugins/oauth-proxy). By deploying the Next.js app, you can get OAuth working in preview deployments and development for Expo apps.
+The Expo app automatically connects to the auth-service running on your local network (port 3001). Make sure:
 
-By using the proxy plugin, the Next.js apps will forward any auth requests to the proxy server, which will handle the OAuth flow and then redirect back to the Next.js app. This makes it easy to get OAuth working since you'll have a stable URL that is publicly accessible and doesn't change for every deployment and doesn't rely on what port the app is running on. So if port 3000 is taken and your Next.js app starts at port 3001 instead, your auth should still work without having to reconfigure the OAuth provider.
+1. The auth-service is running and accessible on your local network
+2. OAuth providers are configured in the auth-service (see auth-service documentation)
 
-#### Add your local IP to your OAuth provider
+#### For Production
 
-You can alternatively add your local IP (e.g. `192.168.x.y:$PORT`) to your OAuth provider. This may not be as reliable as your local IP may change when you change networks. Some OAuth providers may also only support a single callback URL for each app making this approach unviable for some providers (e.g. GitHub).
+Deploy the auth-service with OAuth providers configured. The auth-service supports OAuth proxy for mobile apps - see the auth-service documentation for configuration details.
+
+> **Note**: OAuth configuration (Discord, Google, etc.) is done in the auth-service, not in this application.
 
 ### 5a. When it's time to add a new UI component
 
