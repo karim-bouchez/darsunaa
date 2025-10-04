@@ -14,8 +14,8 @@ export const getBaseUrl = () => {
   if (!url) {
     throw new Error(
       "EXPO_PUBLIC_API_URL is not set. Please configure it in your .env file.\n" +
-      "Development example: EXPO_PUBLIC_API_URL=http://192.168.1.10:3000\n" +
-      "Production example: EXPO_PUBLIC_API_URL=https://api.yourdomain.com"
+        "Development example: EXPO_PUBLIC_API_URL=http://192.168.1.10:3000\n" +
+        "Production example: EXPO_PUBLIC_API_URL=https://api.yourdomain.com",
     );
   }
 
@@ -36,8 +36,8 @@ export const getAuthServiceUrl = () => {
   if (!url) {
     throw new Error(
       "EXPO_PUBLIC_AUTH_SERVICE_URL is not set. Please configure it in your .env file.\n" +
-      "Development example: EXPO_PUBLIC_AUTH_SERVICE_URL=http://192.168.1.10:3001\n" +
-      "Production example: EXPO_PUBLIC_AUTH_SERVICE_URL=https://auth.yourdomain.com"
+        "Development example: EXPO_PUBLIC_AUTH_SERVICE_URL=http://192.168.1.10:3001\n" +
+        "Production example: EXPO_PUBLIC_AUTH_SERVICE_URL=https://auth.yourdomain.com",
     );
   }
 

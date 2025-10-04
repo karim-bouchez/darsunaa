@@ -37,9 +37,7 @@ const authClient = createAuthClient({
   baseURL: AUTH_SERVICE_URL,
 });
 
-export const createTRPCContext = async (opts: {
-  headers: Headers;
-}) => {
+export const createTRPCContext = async (opts: { headers: Headers }) => {
   // Get session from auth-service using Better-Auth client (E2E type-safe!)
   const { data: session } = await authClient.getSession({
     fetchOptions: {

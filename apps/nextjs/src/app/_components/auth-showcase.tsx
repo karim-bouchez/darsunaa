@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 
-import { Button } from "@darsunaa/ui/button";
 import { authClient } from "@darsunaa/auth/client";
+import { Button } from "@darsunaa/ui/button";
 
 /**
  * Auth showcase component
