@@ -53,7 +53,7 @@ packages
   ├─ auth
   │   └─ Authentication using better-auth.
   ├─ db
-  │   └─ Typesafe db calls using Drizzle & Supabase
+  │   └─ Typesafe db calls using Drizzle & PostgreSQL
   └─ ui
       └─ Start of a UI package for the webapp using shadcn-ui
 tooling
@@ -72,7 +72,7 @@ tooling
 ## Quick Start
 
 > **Note**
-> The [db](./packages/db) package is preconfigured to use Supabase and is **edge-bound** with the [Vercel Postgres](https://github.com/vercel/storage/tree/main/packages/postgres) driver. If you're using something else, make the necessary modifications to the [schema](./packages/db/src/schema.ts) as well as the [client](./packages/db/src/index.ts) and the [drizzle config](./packages/db/drizzle.config.ts). If you want to switch to non-edge database driver, remove `export const runtime = "edge";` [from all pages and api routes](https://github.com/t3-oss/create-t3-turbo/issues/634#issuecomment-1730240214).
+> The [db](./packages/db) package is configured to use **PostgreSQL** with the [postgres](https://github.com/porsager/postgres) driver (postgres.js). The database connection runs in standard Node.js runtime (not edge). If you need to use a different database or driver, make the necessary modifications to the [schema](./packages/db/src/schema.ts), the [client](./packages/db/src/client.ts), and the [drizzle config](./packages/db/drizzle.config.ts).
 
 To get it running, follow the steps below:
 

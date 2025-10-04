@@ -1,10 +1,16 @@
-import { sql } from "@vercel/postgres";
-import { drizzle } from "drizzle-orm/vercel-postgres";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 
 import * as schema from "./schema";
 
+if (!process.env.POSTGRES_URL) {
+  throw new Error("POSTGRES_URL environment variable is not set");
+}
+
+const queryClient = postgres(process.env.POSTGRES_URL);
+
 export const db = drizzle({
-  client: sql,
+  client: queryClient,
   schema,
   casing: "snake_case",
 });
