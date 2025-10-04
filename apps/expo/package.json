@@ -53,6 +53,7 @@
     "@darsunaa/tsconfig": "workspace:*",
     "@types/babel__core": "^7.20.5",
     "@types/react": "catalog:react19",
+    "dotenv": "^17.2.3",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
