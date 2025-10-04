@@ -1,170 +1,143 @@
 import { useState } from "react";
 import { Button, Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, Stack } from "expo-router";
-import { LegendList } from "@legendapp/list";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Stack } from "expo-router";
 
-import type { RouterOutputs } from "~/utils/api";
-import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
-function PostCard(props: {
-  post: RouterOutputs["post"]["all"][number];
-  onDelete: () => void;
-}) {
-  return (
-    <View className="flex flex-row rounded-lg bg-muted p-4">
-      <View className="flex-grow">
-        <Link
-          asChild
-          href={{
-            pathname: "/post/[id]",
-            params: { id: props.post.id },
-          }}
-        >
-          <Pressable className="">
-            <Text className="text-xl font-semibold text-primary">
-              {props.post.title}
-            </Text>
-            <Text className="mt-2 text-foreground">{props.post.content}</Text>
-          </Pressable>
-        </Link>
-      </View>
-      <Pressable onPress={props.onDelete}>
-        <Text className="font-bold uppercase text-primary">Delete</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function CreatePost() {
-  const queryClient = useQueryClient();
-
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-
-  const { mutate, error } = useMutation(
-    trpc.post.create.mutationOptions({
-      async onSuccess() {
-        setTitle("");
-        setContent("");
-        await queryClient.invalidateQueries(trpc.post.all.queryFilter());
-      },
-    }),
-  );
-
-  return (
-    <View className="mt-4 flex gap-2">
-      <TextInput
-        className="items-center rounded-md border border-input bg-background px-3 text-lg leading-[1.25] text-foreground"
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Title"
-      />
-      {error?.data?.zodError?.fieldErrors.title && (
-        <Text className="mb-2 text-destructive">
-          {error.data.zodError.fieldErrors.title}
-        </Text>
-      )}
-      <TextInput
-        className="items-center rounded-md border border-input bg-background px-3 text-lg leading-[1.25] text-foreground"
-        value={content}
-        onChangeText={setContent}
-        placeholder="Content"
-      />
-      {error?.data?.zodError?.fieldErrors.content && (
-        <Text className="mb-2 text-destructive">
-          {error.data.zodError.fieldErrors.content}
-        </Text>
-      )}
-      <Pressable
-        className="flex items-center rounded bg-primary p-2"
-        onPress={() => {
-          mutate({
-            title,
-            content,
-          });
-        }}
-      >
-        <Text className="text-foreground">Create</Text>
-      </Pressable>
-      {error?.data?.code === "UNAUTHORIZED" && (
-        <Text className="mt-2 text-destructive">
-          You need to be logged in to create a post
-        </Text>
-      )}
-    </View>
-  );
-}
-
-function MobileAuth() {
+function AuthSection() {
   const { data: session } = authClient.useSession();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSignIn = async () => {
+    setError("");
+
+    try {
+      const result = await authClient.signIn.email({
+        email,
+        password,
+      });
+
+      if (result.error) {
+        setError(result.error.message ?? "Sign in failed");
+      }
+    } catch (err) {
+      setError("Sign in failed");
+      console.error("Sign in failed:", err);
+    }
+  };
+
+  const handleSignUp = async () => {
+    setError("");
+
+    try {
+      const result = await authClient.signUp.email({
+        email,
+        password,
+        name,
+      });
+
+      if (result.error) {
+        setError(result.error.message ?? "Sign up failed");
+      }
+    } catch (err) {
+      setError("Sign up failed");
+      console.error("Sign up failed:", err);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await authClient.signOut();
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  };
+
+  if (session) {
+    return (
+      <View className="flex flex-col items-center gap-4 p-4">
+        <Text className="text-center text-2xl font-semibold text-foreground">
+          Hello, {session.user.name}
+        </Text>
+        <Button onPress={handleSignOut} title="Sign Out" color="#5B65E9" />
+      </View>
+    );
+  }
 
   return (
-    <>
-      <Text className="pb-2 text-center text-xl font-semibold text-zinc-900">
-        {session?.user.name ? `Hello, ${session.user.name}` : "Not logged in"}
-      </Text>
-      <Button
-        onPress={() =>
-          session
-            ? authClient.signOut()
-            : authClient.signIn.social({
-                provider: "discord",
-                callbackURL: "/",
-              })
-        }
-        title={session ? "Sign Out" : "Sign In With Discord"}
-        color={"#5B65E9"}
+    <View className="flex w-full flex-col gap-4 p-4">
+      <View className="flex flex-row gap-2">
+        <Pressable
+          onPress={() => setIsSignUp(false)}
+          className={`flex-1 rounded-md border p-3 ${!isSignUp ? "border-primary bg-primary" : "border-muted bg-background"}`}
+        >
+          <Text
+            className={`text-center font-semibold ${!isSignUp ? "text-primary-foreground" : "text-foreground"}`}
+          >
+            Sign In
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setIsSignUp(true)}
+          className={`flex-1 rounded-md border p-3 ${isSignUp ? "border-primary bg-primary" : "border-muted bg-background"}`}
+        >
+          <Text
+            className={`text-center font-semibold ${isSignUp ? "text-primary-foreground" : "text-foreground"}`}
+          >
+            Sign Up
+          </Text>
+        </Pressable>
+      </View>
+
+      {isSignUp && (
+        <TextInput
+          className="rounded-md border border-input bg-background px-3 py-2 text-foreground"
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="words"
+        />
+      )}
+      <TextInput
+        className="rounded-md border border-input bg-background px-3 py-2 text-foreground"
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
-    </>
+      <TextInput
+        className="rounded-md border border-input bg-background px-3 py-2 text-foreground"
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      {error && <Text className="text-sm text-destructive">{error}</Text>}
+      <Button
+        onPress={isSignUp ? handleSignUp : handleSignIn}
+        title={isSignUp ? "Sign Up" : "Sign In"}
+        color="#5B65E9"
+      />
+    </View>
   );
 }
 
 export default function Index() {
-  const queryClient = useQueryClient();
-
-  const postQuery = useQuery(trpc.post.all.queryOptions());
-
-  const deletePostMutation = useMutation(
-    trpc.post.delete.mutationOptions({
-      onSettled: () =>
-        queryClient.invalidateQueries(trpc.post.all.queryFilter()),
-    }),
-  );
-
   return (
     <SafeAreaView className="bg-background">
-      {/* Changes page title visible on the header */}
-      <Stack.Screen options={{ title: "Home Page" }} />
-      <View className="h-full w-full bg-background p-4">
-        <Text className="pb-2 text-center text-5xl font-bold text-foreground">
-          Create <Text className="text-primary">T3</Text> Turbo
+      <Stack.Screen options={{ title: "Home" }} />
+      <View className="h-full w-full bg-background">
+        <Text className="pb-4 pt-8 text-center text-5xl font-bold text-foreground">
+          Darsunaa
         </Text>
 
-        <MobileAuth />
-
-        <View className="py-2">
-          <Text className="font-semibold italic text-primary">
-            Press on a post
-          </Text>
-        </View>
-
-        <LegendList
-          data={postQuery.data ?? []}
-          estimatedItemSize={20}
-          keyExtractor={(item) => item.id}
-          ItemSeparatorComponent={() => <View className="h-2" />}
-          renderItem={(p) => (
-            <PostCard
-              post={p.item}
-              onDelete={() => deletePostMutation.mutate(p.item.id)}
-            />
-          )}
-        />
-
-        <CreatePost />
+        <AuthSection />
       </View>
     </SafeAreaView>
   );

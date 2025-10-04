@@ -1,6 +1,6 @@
 import path from "node:path";
-import dotenv from "dotenv";
 import type { ConfigContext, ExpoConfig } from "expo/config";
+import dotenv from "dotenv";
 
 // Load environment variables from root .env file
 // Only EXPO_PUBLIC_* variables will be exposed to the mobile app
