@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./alert": "./src/alert.tsx",
     "./button": "./src/button.tsx",
     "./dropdown-menu": "./src/dropdown-menu.tsx",
     "./form": "./src/form.tsx",

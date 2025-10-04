@@ -142,7 +142,7 @@ pnpm turbo gen init
 # Important Notes for Claude Code
 
 - Always remove code if it is no longer needed
-- Always choose the UI component from shadcn-ui if it exists
+- Always choose the UI component from shadcn-ui if it exists (if it's not already added, ask me to run `pnpm ui-add` to add it. Don't run it yourself)
 - Always ensure end-to-end type safety (API, DB, Auth) and don't introduce any `any` types
 
 - When you are done with the changes, make sure you run the "### Code Quality" section above
