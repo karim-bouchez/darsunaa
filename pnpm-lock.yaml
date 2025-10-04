@@ -31,7 +31,7 @@ catalogs:
       specifier: ^5.9.2
       version: 5.9.2
     zod:
-      specifier: 4.1.5
+      specifier: ^4.1.5
       version: 4.1.5
   react19:
     '@types/react':
@@ -81,9 +81,6 @@ importers:
       '@legendapp/list':
         specifier: ^2.0.2
         version: 2.0.2(react-native@0.79.2(@babel/core@7.28.4)(@types/react@19.1.12)(bufferutil@4.0.8)(react@19.1.1))(react@19.1.1)
-      '@t3-oss/env-core':
-        specifier: ^0.13.8
-        version: 0.13.8(arktype@2.1.20)(typescript@5.9.2)(valibot@1.0.0-beta.15(typescript@5.9.2))(zod@4.1.5)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.87.1(react@19.1.1)
@@ -115,7 +112,7 @@ importers:
         specifier: 5.0.7
         version: 5.0.7(8935da5f4d8982ca2820ab43451bf34b)
       expo-secure-store:
-        specifier: 14.2.3
+        specifier: ^14.0.0
         version: 14.2.3(expo@53.0.9(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.2(@babel/core@7.28.4)(@types/react@19.1.12)(bufferutil@4.0.8)(react@19.1.1)))(bufferutil@4.0.8)(graphql@15.8.0)(react-native@0.79.2(@babel/core@7.28.4)(@types/react@19.1.12)(bufferutil@4.0.8)(react@19.1.1))(react@19.1.1))
       expo-splash-screen:
         specifier: 0.30.8
@@ -156,9 +153,6 @@ importers:
       superjson:
         specifier: 2.2.2
         version: 2.2.2
-      zod:
-        specifier: 'catalog:'
-        version: 4.1.5
     devDependencies:
       '@babel/core':
         specifier: ^7.28.4
